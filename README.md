@@ -18,3 +18,18 @@ So, thank you to Symfony2 for the inspiration. A lot of the original code from
 DialogHelper appears in this class because the private scoping of certain 
 functions meant I couldn't easily extend DialogHelper. Hopefully, by making
 this component publicly available, I will get absolution :)
+
+### How it works
+Let's say you've got three autocomplete options:
+- 'a' => Apples
+- 'b' => Bananas
+- 'c' => Carrots
+
+If you type "rot", the auto suggestion will displayed something like:
+Your prompt > Car**rot**s
+
+If you hit return, you'll get 'c' returned, rather than 'Carrots'. 
+
+### Example
+
+coming soon
