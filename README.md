@@ -26,7 +26,7 @@ Let's say you've got three autocomplete options:
 - 'c' => Carrots
 
 If you type "rot", the auto suggestion will displayed something like:
-Your prompt > Car**rot**s
+Your prompt > Car **rot** s
 
 If you hit return, you'll get 'c' returned, rather than 'Carrots'. 
 
