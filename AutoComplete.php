@@ -229,7 +229,11 @@ class AutoComplete
         }
 
         if ($this->clearOnSuccess) {
+<<<<<<< HEAD
             $len = strlen($prompt) + $this->cursorPosition;
+=======
+			$len = strlen($prompt) + $this->cursorPosition;
+>>>>>>> e4797826dd9859bbbbe61310a0cd71143fc014ba
             $this->output->write("\033[{$len}D");
             $this->output->write("\033[K");
         }
