@@ -30,6 +30,11 @@ Your prompt > Car **rot** s
 
 If you hit return, you'll get 'c' returned, rather than 'Carrots'. 
 
+### Known Issues
+If a suggestion extends beyond the width of the console, results can get
+interesting. Fix for the time being is to keep the prompts short or make
+your window wider :)
+
 ### Example
 
 coming soon
