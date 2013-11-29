@@ -1,6 +1,6 @@
 <?php
 
-namespace AH\Symfony2\Console;
+namespace Diginuity\AutoComplete;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
@@ -21,7 +21,8 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
  * @author Adrian Hardy <ah@adrianhardy.co.uk>
  * @since 23rd Feb 2013
  */
-class AutoComplete {
+class AutoComplete
+{
 
     /**
      * @var string the long hex code representing the terminal settings before
@@ -67,6 +68,11 @@ class AutoComplete {
     protected $autocomplete = array();
 
     /**
+     * @var bool
+     */
+    protected $clearOnSuccess = false;
+
+    /**
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @param array $autocomplete
      */
@@ -75,11 +81,28 @@ class AutoComplete {
         $this->output = $output;
     }
 
+
+    /**
+     * When the user hits "return" because they're satisfied with their choice,
+     * the prompt will simply vanish, rather than remaining on screen.
+     *
+     * @param bool $clearOnSuccess
+     * @return $this
+     */
+    public function setClearOnSuccess($clearOnSuccess = true) {
+        $this->clearOnSuccess = $clearOnSuccess;
+        return $this;
+    }
+
     /**
      * If we've not set up a style name, create on of our own.
      */
     protected function setupStyle() {
-        $this->output->getFormatter()->setStyle('hl', new OutputFormatterStyle(null, null, array('bold')));
+
+        if (!$this->output->getFormatter()->hasStyle('hl')) {
+            $this->output->getFormatter()->setStyle('hl', new OutputFormatterStyle('white', null, array('bold')));
+        }
+
     }
 
     /**
@@ -104,7 +127,6 @@ class AutoComplete {
         $this->setupStyle();
         $this->initStty();
 
-
         while ($c = fread($this->inputStream, 1)) {
 
             $backspace = ("\177" === $c);
@@ -121,7 +143,7 @@ class AutoComplete {
 
                         // chop off the last char off our search string
                         if ($this->search) {
-                            $this->search = substr($this->search, 0, strlen($this->search)-1);
+                            $this->search = substr($this->search, 0, strlen($this->search) - 1);
                         }
 
                     }
@@ -131,7 +153,6 @@ class AutoComplete {
                     }
 
                     $this->checkMatches();
-
                     break;
 
                 case $escSequence:
@@ -160,6 +181,17 @@ class AutoComplete {
                             break 2;
                         } else {
                             $this->output->write("\007"); // bell
+                        }
+                    }
+
+                    if ("\t" === $c) {
+                        if (!empty($this->matches)) {
+                            $this->output->writeln("");
+                            foreach ($this->matches as $match) {
+                                $this->output->writeln(" - " . $match);
+                            }
+                            $this->cursorPosition = 0;
+                            $this->output->write($prompt);
                         }
                     }
                     break;
@@ -199,12 +231,19 @@ class AutoComplete {
 
         }
 
-		$this->restoreStty();
+        if ($this->clearOnSuccess) {
+			$len = strlen($prompt) + $this->cursorPosition;
+            $this->output->write("\033[{$len}D");
+            $this->output->write("\033[K");
+        }
 
-        $this->output->writeln("");
+        $this->restoreStty();
 
+        if (!$this->clearOnSuccess) {
+            $this->output->writeln("");
+        }
         return $this->return;
-	}
+    }
 
     /**
      * Finding the match and just writing it is easy, the problem we've got is
@@ -224,14 +263,16 @@ class AutoComplete {
         $len = strlen($this->search);
 
         // jump back to the start of the line
-        $this->output->write("\033[{$this->cursorPosition}D");
+        if ($this->cursorPosition > 0) {
+            $this->write("\033[{$this->cursorPosition}D");
+        }
 
         // write out the non-search-text part of the match
         $this->write(substr($suggestion, 0, $start));
         // highlight the part that matches our search string
         $this->write("<hl>" . substr($suggestion, $start, $len) . "</hl>");
         // write out the rest of the match
-        $this->write(substr($suggestion, $start+strlen($this->search)));
+        $this->write(substr($suggestion, $start + strlen($this->search)));
 
         // cursor is now at the end of the suggestion string, and we want
         // the cursor to be at the end of their search string
@@ -265,7 +306,7 @@ class AutoComplete {
             }
         }
 
-        $this->currentSuggestion = empty($this->matches)?-1:0;
+        $this->currentSuggestion = empty($this->matches) ? -1 : 0;
     }
 
     protected function debug() {
@@ -291,17 +332,17 @@ class AutoComplete {
         $this->write("\033[u");
     }
 
-	protected function restoreStty() {
-		shell_exec('stty ' . $this->startSttyMode);
-	}
+    protected function restoreStty() {
+        shell_exec('stty ' . $this->startSttyMode);
+    }
 
-	protected function initStty() {
-            $this->startSttyMode = shell_exec('stty -g');
-            // -echo stops echoing keypresses to stdout
-            // -icanon enable a bunch of special chars
-            shell_exec('stty -icanon -echo');
+    protected function initStty() {
+        $this->startSttyMode = shell_exec('stty -g');
+        // -echo stops echoing keypresses to stdout
+        // -icanon enable a bunch of special chars
+        shell_exec('stty -icanon -echo');
 
-	}
+    }
 
 }
 
